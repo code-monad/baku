@@ -1,0 +1,12 @@
+[submodule "3rd_party/libzippp"]
+	path = 3rd_party/libzippp
+	url = https://github.com/leezu/libzippp.git
+[submodule "3rd_party/selene"]
+	path = 3rd_party/selene
+	url = https://github.com/kmhofmann/selene.git
+[submodule "3rd_party/json"]
+	path = 3rd_party/json
+	url = https://github.com/nlohmann/json.git
+[submodule "3rd_party/argparse"]
+	path = 3rd_party/argparse
+	url = https://github.com/p-ranav/argparse.git
