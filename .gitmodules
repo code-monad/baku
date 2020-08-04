@@ -10,9 +10,3 @@
 [submodule "3rd_party/argparse"]
 	path = 3rd_party/argparse
 	url = https://github.com/p-ranav/argparse.git
-[submodule "3rd_party/pngwriter"]
-	path = 3rd_party/pngwriter
-	url = https://github.com/pngwriter/pngwriter.git
-[submodule "3rd_party/lodepng"]
-	path = 3rd_party/lodepng
-	url = https://github.com/lvandeve/lodepng.git

@@ -1,5 +1,5 @@
 project(baku)
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.14)
 set(CMAKE_CXX_STANDARD 20)
 
 find_package(fmt)
@@ -10,9 +10,6 @@ set(JSON_BuildTests OFF CACHE INTERNAL "")
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd_party/json)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd_party/libzippp)
 add_subdirectory(${CMAKE_SOURCE_DIR}/3rd_party/selene)
-add_subdirectory(${CMAKE_SOURCE_DIR}/3rd_party/pngwriter)
-add_definitions(-DLODEPNG_COMPILE_ANCILLARY_CHUNKS)
-add_library(lodepng ${CMAKE_SOURCE_DIR}/3rd_party/lodepng/lodepng.cpp)
 
 set(BAKU_SRCS
   ${CMAKE_SOURCE_DIR}/src/utility.cc
@@ -38,8 +35,5 @@ set_target_properties(baku_exe
   OUTPUT_NAME "baku")
 target_link_libraries(baku_exe
   PUBLIC baku
-  PRIVATE PNGwriter lodepng
   )
-target_include_directories(baku_exe
-  PRIVATE ${CMAKE_SOURCE_DIR}/3rd_party/pngwriter/src
-  ${CMAKE_SOURCE_DIR}/3rd_party/lodepng)
+

@@ -48,7 +48,7 @@ namespace baku {
       }
     };
   
-  const std::filesystem::path bundle_files(const std::filesystem::path& source,  const std::filesystem::path& pre_dest = {}, std::function<const std::string(const std::filesystem::path& source)> encode_fn = dummy_encode_fn);
+	const std::filesystem::path bundle_files(const std::filesystem::path& source,  const std::filesystem::path& pre_dest = {}, const bool encode_single = false, std::function<const std::string(const std::filesystem::path& source)> encode_fn = dummy_encode_fn);
 
   const std::map<std::filesystem::path, std::string> walk_dir(const std::filesystem::path& target);
 } // namespace baku
