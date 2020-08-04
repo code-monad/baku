@@ -20,6 +20,9 @@ int main(int argc, char *argv[]) {
     }
 
     switch(args.mode()){
+	case baku::mode_t::RUA:
+		fmt::print("{}", args.help().str());
+		break;
     case baku::mode_t::FEED:
 	{
 		fmt::print("Running in [feed] mode\n");
@@ -38,37 +41,32 @@ int main(int argc, char *argv[]) {
 			} else {
 				const auto& encoded = buffer;
 				fmt::print("Multipler using fake images {}\n", args.fake().string());
-				sln::DynImage img_data = sln::read_image(sln::FileReader(args.fake().string()));
-				if(!img_data.is_valid()){
+				sln::DynImage fake_data = sln::read_image(sln::FileReader(args.fake().string()));
+				if(!fake_data.is_valid()){
 					fmt::print("Image {} could not be decoded.\n", args.fake().string());
 					return -1;
 				}
 
 				//sln::write_image(img_data, sln::ImageFormat::PNG, sln::FileWriter(args.fake().string())); // re-coded to png
+				std::vector<std::uint8_t> fake_buffer;
+				sln::write_image(fake_data, sln::ImageFormat::PNG, sln::VectorWriter(fake_buffer));
 
-				std::ifstream fake_stream(args.fake(), fake_stream.in | fake_stream.binary);
-
-				if(!fake_stream.is_open()) {
-					fmt::print("Failed to open {}!\n", args.fake().string());
-					return -1;
-				}
+				auto out_buffer = baku::fake_generation(fake_buffer, encoded);
 
 				std::ofstream writer(args.out(), writer.out | writer.trunc | writer.binary);
 				if(!writer.is_open()) {
 					fmt::print("Failed to open {}!\n", args.out().string());
 					return -1;
 				}
-	  
 				fmt::print("Writing to {}...\n", args.out().string());
-			    writer << fake_stream.rdbuf();
-				fake_stream.close();
-				std::copy(encoded.crbegin(), encoded.crend(), std::ostreambuf_iterator<char>(writer));
+				std::copy(out_buffer.cbegin(), out_buffer.cend(), std::ostreambuf_iterator<char>(writer));
 				writer.close();
-				fmt::print("Wrote {} bytes!", encoded.size());
+				fmt::print("Wrote {} bytes!", out_buffer.size() - fake_buffer.size());
 			}
 		}
 	}
 	break;
+	
     case baku::mode_t::POUR:
 		fmt::print("Running in [pour] mode\n");
 		std::ifstream reader(args.in(), reader.in | reader.binary);

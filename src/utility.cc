@@ -3,15 +3,16 @@
 #include <fmt/format.h>
 #include <zip.hpp>
 #include <regex>
-baku::args::args(std::string ext) : _default_ext{ext},  _program("baku", baku::VERSION) {
+
+baku::args::args(std::string ext) : _mode{ baku::mode_t::DUMMY }, _default_ext{ext},  _program("baku", baku::VERSION) {
+	_program.add_description("Make raw contents into PNG format, and do with the encoded data reversely.");
 	_program.add_argument("-p", "--pour")
 		.help("run in pour mode")
 		.default_value(false)
 		.implicit_value(true);
 
 	_program.add_argument("-i", "--input", "input")
-		.help("input target")
-		.required();
+		.help("input target");
 
 	_program.add_argument("-o", "--output", "output")
 		.help("output destination");
@@ -21,14 +22,28 @@ baku::args::args(std::string ext) : _default_ext{ext},  _program("baku", baku::V
 
 	_program.add_argument("-m", "--multipler", "multipler")
 		.help("fake base");
-														}
+
+	_program.add_argument("--metainfo", "metainfo")
+		.default_value("baku.meta")
+		.help("metainfo of encoded objects.(jsonfile)");
+    }
 
 baku::args::~args() {}
 
 void baku::args::parse(int argc, char** argv) {
 	_program.parse_args(argc, argv);
-	_mode = (_program["--pour"] == true)? baku::mode_t::POUR : baku::mode_t::FEED;
-	_in = std::filesystem::path(_program.get<std::string>("input"));
+	
+	if(auto in = _program.present("input")) {
+		_in = std::filesystem::path(*in);
+	} else {
+		_in = "-";
+		_mode = baku::mode_t::RUA;
+	}
+	
+	if(_mode == baku::mode_t::DUMMY) {
+		_mode = (_program["--pour"] == true)? baku::mode_t::POUR : baku::mode_t::FEED;
+	}
+	
 	if(auto out = _program.present("output")) {
 		_out = std::filesystem::path(*out);
 	} else {
@@ -118,4 +133,11 @@ baku::walk_dir(const std::filesystem::path &target) {
 		}
 	}
 	return result;
+}
+
+
+const std::vector<std::uint8_t> baku::fake_generation(const std::vector<std::uint8_t>& fake_buffer, const std::vector<std::uint8_t>& buffer){
+	std::vector<std::uint8_t> result_buffer = fake_buffer;
+	std::copy(buffer.crbegin(), buffer.crend(), std::back_inserter(result_buffer));
+	return result_buffer;
 }
