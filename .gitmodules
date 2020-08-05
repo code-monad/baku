@@ -13,3 +13,6 @@
 [submodule "3rd_party/digestpp"]
 	path = 3rd_party/digestpp
 	url = https://github.com/kerukuro/digestpp.git
+[submodule "3rd_party/lodepng"]
+	path = 3rd_party/lodepng
+	url = https://github.com/lvandeve/lodepng

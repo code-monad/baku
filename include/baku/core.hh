@@ -4,8 +4,6 @@
 #include <baku/core/feed.hh>
 #include <baku/core/pour.hh>
 
-namespace baku {
-  
-} // namespace baku
+namespace baku {}  // namespace baku
 
 #endif
