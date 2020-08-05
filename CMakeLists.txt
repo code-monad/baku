@@ -14,6 +14,8 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/3rd_party/selene)
 set(BAKU_SRCS
   ${CMAKE_SOURCE_DIR}/src/utility.cc
   ${CMAKE_SOURCE_DIR}/src/core/feed.cc
+  ${CMAKE_SOURCE_DIR}/src/core/pour.cc
+  ${CMAKE_SOURCE_DIR}/src/meta.cc
   )
 
 add_library(baku ${BAKU_SRCS})
@@ -21,11 +23,12 @@ add_library(baku ${BAKU_SRCS})
 target_link_libraries(baku
   PUBLIC fmt::fmt ${ZIP_LIBRARIES} selene::selene nlohmann_json::nlohmann_json)
 target_include_directories(baku
-  PRIVATE ${CMAKE_SOURCE_DIR}/3rd_party/libzippp/
-  ${CMAKE_SOURCE_DIR}/3rd_party/selene/
+  PRIVATE ${CMAKE_SOURCE_DIR}/3rd_party/libzippp
+  ${CMAKE_SOURCE_DIR}/3rd_party/selene
   ${CMAKE_SOURCE_DIR}/3rd_party/json/include
   
   PUBLIC ${CMAKE_SOURCE_DIR}/include
+  ${CMAKE_SOURCE_DIR}/3rd_party/digestpp
   ${CMAKE_SOURCE_DIR}/3rd_party/argparse/include)
 
 set(BAKU_EXE_SRCS ${CMAKE_SOURCE_DIR}/src/main.cc)

@@ -4,6 +4,7 @@
 #include <string_view>
 #include <baku/baku.hh>
 #include <baku/core.hh>
+#include <baku/meta.hh>
 #include <baku/utility.hh>
 #include <baku/version.hh>
 namespace baku {

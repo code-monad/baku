@@ -2,9 +2,12 @@
 #include <baku/version.hh>
 #include <fmt/format.h>
 #include <zip.hpp>
-#include <regex>
 
-baku::args::args(std::string ext) : _mode{ baku::mode_t::DUMMY }, _default_ext{ext},  _program("baku", baku::VERSION) {
+#include <chrono>
+#include <regex>
+#include <thread>
+
+baku::args::args(std::string ext) : _mode{ baku::mode_t::DUMMY }, _verbose{false}, _default_ext{ext},  _program("baku", baku::VERSION) {
 	_program.add_description("Make raw contents into PNG format, and do with the encoded data reversely.");
 	_program.add_argument("-p", "--pour")
 		.help("run in pour mode")
@@ -23,10 +26,14 @@ baku::args::args(std::string ext) : _mode{ baku::mode_t::DUMMY }, _default_ext{e
 	_program.add_argument("-m", "--multipler", "multipler")
 		.help("fake base");
 
-	_program.add_argument("--metainfo", "metainfo")
-		.default_value("baku.meta")
+	_program.add_argument("--metainfo")
 		.help("metainfo of encoded objects.(jsonfile)");
-    }
+	
+	_program.add_argument("--verbose")
+		.default_value(false)
+		.implicit_value(true)
+		.help("turn on verbose");
+}
 
 baku::args::~args() {}
 
@@ -43,6 +50,8 @@ void baku::args::parse(int argc, char** argv) {
 	if(_mode == baku::mode_t::DUMMY) {
 		_mode = (_program["--pour"] == true)? baku::mode_t::POUR : baku::mode_t::FEED;
 	}
+
+	_verbose = _program["--verbose"] == true;
 	
 	if(auto out = _program.present("output")) {
 		_out = std::filesystem::path(*out);
@@ -57,11 +66,19 @@ void baku::args::parse(int argc, char** argv) {
 	if(auto fake = _program.present("multipler")) {
 		_fake = std::filesystem::path(*fake);
 	}
+
+	if(auto meta = _program.present("--metainfo")) {
+		_meta = std::filesystem::path(*meta);
+	} else {
+		_meta = "baku.meta";
+	}
+	
 }
 
 const std::filesystem::path
 baku::bundle_files(const std::filesystem::path &source,
                    const std::filesystem::path &pre_dest,
+				   const bool verbose,
 				   const bool encode_single,
 				   std::function<const std::string(const std::filesystem::path& source)> encode_fn) {
 	std::filesystem::path dst = pre_dest;
@@ -77,12 +94,17 @@ baku::bundle_files(const std::filesystem::path &source,
 			}
       
 			libzip::archive archive(dst.string(), ZIP_CREATE|ZIP_TRUNCATE);
-			auto walk_info = baku::walk_dir(source);
+			auto walk_info = baku::walk_dir(source, verbose);
+
 			fmt::print("Bunded {} files.\n", walk_info.size());
-			fmt::print("Caching into {}...\n", dst.string());
+			if(verbose){
+				fmt::print("Caching into {}...\n", dst.string());
+			}
+
 			for(auto const& [src_path, dst_path]: walk_info) {
 				archive.add(libzip::source_buffer(encode_fn(src_path)), dst_path);
 			}
+
 		} else {
 			if(dst.empty()) {
 				dst = source;
@@ -94,8 +116,6 @@ baku::bundle_files(const std::filesystem::path &source,
       
 			if(std::filesystem::is_directory(dst)) {
 				dst /= fmt::format("{}.chunk", source.string());
-			} else {
-	
 			}
 
 			std::ofstream writer(dst, writer.out | writer.binary | writer.trunc);
@@ -105,8 +125,10 @@ baku::bundle_files(const std::filesystem::path &source,
 				    encoded = encode_fn(source);
 				else
 					encoded = dummy_encode_fn(source);
-				fmt::print("dst:{}\n========\ndata_preview\n========\n{}",dst.string(), encoded.size() > 100? encoded.substr(0,100): encoded);
-				fmt::print("{}========\n", encoded.size() > 100? "...\n":"");
+				if(verbose){
+					fmt::print("dst:{}\ndata_preview:\n========\n{}",dst.string(), encoded.size() > 100? encoded.substr(0,100): encoded);
+					fmt::print("{}========\n", encoded.size() > 100? "...\n":"");
+				}
 				writer << encoded;
 			}
 			writer.close();
@@ -120,7 +142,7 @@ baku::bundle_files(const std::filesystem::path &source,
 }
 
 const std::map<std::filesystem::path, std::string>
-baku::walk_dir(const std::filesystem::path &target) {
+baku::walk_dir(const std::filesystem::path &target, const bool verbose) {
 	std::map<std::filesystem::path, std::string> result;
 	for(auto& p: std::filesystem::recursive_directory_iterator(target)) {
 		if(!std::filesystem::is_directory(p)) {
@@ -128,7 +150,7 @@ baku::walk_dir(const std::filesystem::path &target) {
       
 			//std::replace(zip_path.begin(), zip_path.end(), "/", "//");
 			zip_path = std::regex_replace(zip_path, std::regex("\\/"), "//");
-			fmt::print("{}\n", zip_path);
+			if(verbose) fmt::print("{}\n", zip_path);
 			result[p.path()] = zip_path;
 		}
 	}
@@ -140,4 +162,18 @@ const std::vector<std::uint8_t> baku::fake_generation(const std::vector<std::uin
 	std::vector<std::uint8_t> result_buffer = fake_buffer;
 	std::copy(buffer.crbegin(), buffer.crend(), std::back_inserter(result_buffer));
 	return result_buffer;
+}
+
+
+const std::string baku::to_shorten(const std::string& sha){
+	std::string shortened;
+	if(!sha.empty()) {
+		auto fnv = baku::hash::fnv1a<std::uint32_t>::hash(sha.c_str());
+		while(fnv){
+			shortened.push_back(baku::ASCII[fnv % 62]);
+			fnv /= 62;
+		}
+		std::reverse(shortened.begin(), shortened.end());
+	}
+	return shortened;
 }

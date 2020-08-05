@@ -12,7 +12,7 @@
 
 namespace baku {
   constexpr auto generate_fn(const std::vector<std::uint8_t>& buffer, unsigned width) {
-    return [&buffer, &width](sln::PixelIndex x, sln::PixelIndex y){
+    return [&buffer, width](sln::PixelIndex x, sln::PixelIndex y){
 	     sln::PixelRGB_8u pix;
 	     auto offset = pos_to_index(width, x.value(), y.value());
 	     auto start_iter = std::next(buffer.begin(),offset);
